@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Guide2Cypress</title>
+    <style>
+        @font-face {
+            font-family: 'Work Sans';
+            src: url('fonts/WorkSans-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Work Sans';
+            src: url('fonts/WorkSans-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Work Sans';
+            src: url('fonts/WorkSans-ExtraBold.ttf') format('truetype');
+            font-weight: 800;
+            font-style: normal;
+        }
+
+        :root {
+            --text-primary: #121417;
+            --brand-red: #EF4444;
+            --brand-red-hover: #DC2626;
+            --brand-blue: #3B82F6;
+            --brand-blue-hover: #2563EB;
+            --brand-yellow: #F59E0B;
+            --brand-yellow-hover: #D97706;
+            --brand-green: #10B981;
+            --brand-green-hover: #059669;
+            --background-light: #F0F2F5;
+            --border-color: #E5E7EB;
+        }
+
+        html {
+            box-sizing: border-box;
+             overflow: hidden; 
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+            overflow: hidden; 
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            background-color: #FFFFFF;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .page {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        /* Header */
+        .app-header {
+        display: flex;
+        justify-content: center; 
+        align-items: center;
+        padding: 16px 24px;
+        position: relative; 
+        }
+
+        .header-icon {
+            position: absolute;
+            right: 24px; 
+        }
+
+        .app-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .header-icon {
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .header-icon img, .header-icon svg {
+             width: 100%;
+             height: 100%;
+        }
+
+        /* Page 1: Start Screen */
+        #page-one-start .content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+        }
+
+        #page-one-start .tutorial-gif {
+            background-image: url('startRecord.gif');
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: contain; /* or 'cover' depending on your preference */
+            width: 100%;
+            height: 200px;
+            border: none;
+        }
+        
+        #page-one-start .prompt-heading {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 8px 0;
+        }
+
+        #page-one-start .prompt-subheading {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin: 0 0 24px 0;
+        }
+
+        #start-record-btn {
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            background-color: var(--background-light);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+        }
+        #start-record-btn:hover {
+            background-color: #F3F4F6;
+        }
+        
+        /* Page 2: Recording Screen */
+        #page-two-recording {
+            justify-content: space-between;
+        }
+
+        
+        #steps-list-container {
+        padding: 24px;
+        flex-grow: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        max-height: calc(100vh - 180px); 
+        }
+        
+        #steps-list-container .steps-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        #steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text-primary);
+            padding: 8px 0;
+        }
+        
+        .step-item-text {
+            flex-grow: 1;
+            margin-right: 12px;
+        }
+
+        .step-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .delete-step-btn {
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .delete-step-btn:hover {
+            opacity: 1;
+        }
+
+        .time-check-expand-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 40px;
+            width: 40px; /* Start small */
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Work Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 400;
+            color: #fff;
+            overflow: hidden;
+            transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+            padding: 0;
+            background-color: var(--brand-green);
+        }
+
+        .time-check-expand-btn:hover {
+            width: 240px; /* Expand to fit text */
+            padding: 0 12px;
+            justify-content: flex-start;
+            background-color: var(--brand-green-hover);
+        }
+        
+        .time-check-expand-btn img {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .time-check-expand-btn span {
+            display: none; /* Hide text by default */
+        }
+
+        .time-check-expand-btn:hover span {
+            display: inline; /* Show text on hover */
+        }
+        /* 
+        .time-check-btn {
+            position: relative;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            background-color: var(--brand-green);
+            border: none;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        .time-check-btn img {
+            width: 24px;
+            height: 24px;
+        }
+        .time-check-btn:hover {
+            background-color: var(--brand-green-hover);
+        }
+        
+        .time-check-btn .tooltip {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--brand-green-hover);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .time-check-btn:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        } */
+        
+        #steps-list.empty {
+             justify-content: center;
+             align-items: center;
+             height: 100%;
+             color: #6B7280;
+             font-size: 16px;
+        }
+
+        /* Test Configuration Styles */
+        .test-config-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background-color: var(--background-light);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .test-config-container input {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Work Sans', sans-serif;
+            font-size: 14px;
+            background-color: #FFFFFF;
+            transition: border-color 0.2s;
+        }
+
+        .test-config-container input:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .test-config-container input::placeholder {
+            color: #9CA3AF;
+        }
+
+        .recording-controls {
+        display: flex;
+        gap: 12px;
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-color);
+        justify-content: center;
+        background: #FFFFFF; 
+        position: sticky;
+        bottom: 0;
+        }
+
+
+        .control-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 40px;
+            width: 40px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Work Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 400;
+            color: #fff;
+            overflow: hidden;
+            transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+            padding: 0;
+        }
+
+        .control-btn img {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+        opacity: 1; /* Ensure icon is always visible */
+        transition: opacity 0.2s ease;
+    }
+
+    .control-btn:hover img {
+        opacity: 1; /* Keep icon visible on hover */
+    }
+
+    .control-btn span.tooltip-text {
+        display: none; /* Hide text by default */
+    }
+
+    /* Expand on hover */
+    .control-btn:hover {
+        width: 180px;
+        padding: 0 12px;
+        justify-content: flex-start;
+    }
+
+    .control-btn:hover span.tooltip-text {
+        display: inline; /* Show text on hover */
+    }
+
+
+
+        #stop-recording-btn { background-color: var(--brand-red); }
+        #stop-recording-btn:hover { background-color: var(--brand-red-hover); }
+
+        #assertions-btn { background-color: var(--brand-blue); }
+        #assertions-btn:hover { background-color: var(--brand-blue-hover); }
+
+        #visual-assertion-btn { background-color: var(--brand-yellow); }
+        #visual-assertion-btn:hover { background-color: var(--brand-yellow-hover); }
+        
+        /* Page 3: Export Screen */
+        #page-three-export .content {
+             flex-grow: 1;
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+             justify-content: center;
+             padding: 24px;
+             gap: 16px;
+        }
+        
+        #page-three-export .export-title {
+             font-size: 24px;
+             font-weight: 800;
+             margin-bottom: 8px;
+        }
+        
+        .export-btn {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+            text-align: center;
+        }
+        
+        #send-to-vscode-btn {
+            background-color: var(--brand-blue);
+            color: #FFFFFF;
+            border: 1px solid var(--brand-blue);
+        }
+        #send-to-vscode-btn:hover {
+            background-color: var(--brand-blue-hover);
+        }
+        
+        #copy-steps-btn,
+        #generate-steps-btn {
+            background-color: #FFFFFF;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        #copy-steps-btn:hover,
+        #generate-steps-btn:hover {
+             background-color: #F3F4F6;
+        }
+                /* Page 4: Assertion Styles */
+        #page-four-assertion .content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+        }
+
+        #assertion-instruction-view {
+            background: linear-gradient(0deg, #DBEAFE, transparent);
+        }
+
+        #assertion-instruction-view .illustration {
+            background-image: url(assertIllustration.svg);
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: contain;
+            width: 250px;
+            height: 250px;
+            margin-bottom: 24px;
+        }
+
+        #assertion-options-view {
+            justify-content: space-between;
+            padding: 24px;
+        }
+
+        #assertion-options-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            text-align: left;
+        }
+
+        .assertion-item {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+        }
+
+        .assertion-item input[type="checkbox"] {
+            /* Style the checkbox to be the brand blue */
+            accent-color: #2563EB;
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+        }
+
+        .add-assertions-button {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #2563EB;
+            color: #FFFFFF;
+            border: none;
+            margin-top: 24px;
+        }
+        #assertion-instruction-view.visual-mode-background {
+            background: linear-gradient(0deg, #FFE4E1, transparent);
+        }
+
+        /* New class to specifically handle the visual illustration */
+        .visual-illustration {
+            background-image: url('visualIllustration.svg') !important; /* Use !important to override the default */
+            width: 250px !important; /* Adjust size if needed */
+            height: 250px !important;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- PAGE 1: START SCREEN -->
+    <div id="page-one-start" class="page active">
+        <header class="app-header">
+            <h1 class="app-title">Guide2Cypress</h1>
+            <div class="header-icon" id="settings-btn-page-one">
+                <img src="icons/settings.svg" alt="Settings">
+            </div>
+        </header>
+        <main class="content">
+            <div class="tutorial-gif"></div> <!-- Placeholder for GIF -->
+            <h2 class="prompt-heading">Click 'Record' to begin capturing your test.</h2>
+            <p class="prompt-subheading">Once you start recording, your actions will be listed here.</p>
+            <button id="start-record-btn">Start Record</button>
+        </main>
+    </div>
+
+    <!-- PAGE 2: RECORDING SCREEN -->
+    <div id="page-two-recording" class="page">
+        <header class="app-header">
+            <h1 class="app-title">Guide2Cypress</h1>
+            <div class="header-icon" id="settings-btn-page-one">
+                <img src="icons/settings.svg" alt="Settings">
+            </div>
+        </header>
+        <div id="steps-list-container">
+            <h2 class="steps-title">Steps</h2>
+            
+            <!-- NEW SECTION: Test Configuration -->
+            <div class="test-config-container">
+                <input type="text" id="login-url" placeholder="Login URL">
+                <input type="text" id="test-username" placeholder="Test Username">
+                <input type="password" id="test-password" placeholder="Test Password">
+                <input type="text" id="test-otp" placeholder="One-Time Password (OTP)">
+            </div>
+            <!-- END OF NEW SECTION -->
+            
+            <div id="steps-list" class="empty">
+                Your recorded steps will appear here.
+            </div>
+        </div>
+       <footer class="recording-controls">
+            <button id="stop-recording-btn" class="control-btn">
+                <img src="icons/stop.svg" alt="Stop">
+                <span class="tooltip-text">Stop Recording</span>
+            </button>
+            <button id="assertions-btn" class="control-btn">
+                <img src="icons/assert.svg" alt="Assertions">
+                <span class="tooltip-text">Assertions</span>
+            </button>
+            <button id="visual-assertion-btn" class="control-btn">
+                <img src="icons/visual.svg" alt="Visual">
+                <span class="tooltip-text">Visual Assertion</span>
+            </button>
+        </footer>
+
+    </div>
+
+    <!-- PAGE 3: EXPORT SCREEN -->
+    <div id="page-three-export" class="page">
+        <header class="app-header">
+            <h1 class="app-title">Guide2Cypress</h1>
+            <div class="header-icon" id="close-export-btn">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </div>
+        </header>
+        <main class="content">
+            <h2 class="export-title">Send to VS Code</h2>
+            <button id="send-to-vscode-btn" class="export-btn">Send</button>
+            <button id="copy-steps-btn" class="export-btn">Copy Recorded Steps</button>
+            <button id="generate-steps-btn" class="export-btn">Generate Code & Copy</button>
+        </main>
+    </div>
+        <!-- PAGE 4: ASSERTION WORKFLOW -->
+    <div id="page-four-assertion" class="page">
+        <header class="app-header">
+            <h1 id="assertion-page-title" class="app-title">Assertion</h1>
+            <div class="header-icon" id="close-assertion-btn">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </div>
+        </header>
+
+        <!-- View 1: Instruction to select an element -->
+       <main id="assertion-instruction-view" class="content">
+            <div id="instruction-illustration" class="illustration"></div>
+        </main>
+
+        <!-- View 2: Options for the selected element -->
+        <main id="assertion-options-view" class="content" style="display: none;">
+            <div id="assertion-options-list">
+                <!-- Checkboxes will be dynamically added here -->
+            </div>
+            <button id="add-assertions-btn" class="add-assertions-button">Add Selected Assertions</button>
+        </main>
+    </div>
+
+    <script src="sidepanel.js"></script>
+</body>
+</html>

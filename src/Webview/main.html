@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide2Cypress</title>
+    <style>
+        /* Basic styles for centering and buttons */
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--vscode-foreground);
+            background-color: var(--vscode-sideBar-background);
+        }
+        .container {
+            padding: 20px;
+        }
+        .button {
+            padding: 10px 20px;
+            border: none;
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+        p {
+            font-size: 14px;
+        }
+        .loader {
+            border: 4px solid var(--vscode-sideBar-background);
+            border-top: 4px solid var(--vscode-button-background);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-top: 20px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: 100%;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--vscode-foreground);
+            opacity: 0.7;
+        }
+        .close-button:hover {
+            opacity: 1;
+        }
+
+        .run-options {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <!-- Content will be injected by main.js -->
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+        const app = document.getElementById('app');
+
+        // Store the last known state to prevent re-renders
+        let lastState = {};
+
+        window.addEventListener('message', event => {
+            const message = event.data;
+            switch (message.command) {
+                case 'updateView':
+                    // Only render if the state has actually changed
+                    if (JSON.stringify(lastState) !== JSON.stringify(message.state)) {
+                        lastState = message.state;
+                        render(message.state);
+                    }
+                    break;
+            }
+        });
+
+        function render(state) {
+            // --- NEW: STATE 6 (SUCCESS) ---
+            if (state.testResult === 'success') {
+                app.innerHTML = `
+                    <div class="result-header">
+                        <h2>✅ Test Passed!</h2>
+                        <button id="close-result-btn" class="close-button" title="Start new test">✖</button>
+                    </div>
+                    <p>All assertions in the test run were successful.</p>
+                    <div class="run-options">
+                        <span>Run Again on:</span>
+                        <button id="run-chrome-btn" class="button">Chrome</button>
+                        <button id="run-firefox-btn" class="button">Firefox</button>
+                        <button id="run-webkit-btn" class="button">WebKit</button>
+                    </div>
+                `;
+                // Add event listeners for the new buttons
+                addRunButtonListeners(state);
+                document.getElementById('close-result-btn').addEventListener('click', () => {
+                    vscode.postMessage({ command: 'resetToListener' });
+                });
+            }
+            // --- NEW: STATE 7 (FAILURE) ---
+            else if (state.testResult === 'failure') {
+                app.innerHTML = `
+                    <div class="result-header">
+                        <h2>❌ Test Failed</h2>
+                        <button id="close-result-btn" class="close-button" title="Start new test">✖</button>
+                    </div>
+                    <p>One or more assertions failed. Check the logs for details.</p>
+                    <button id="heal-test-btn" class="button">💡 Heal Test</button>
+                    <div class="run-options">
+                        <span>Run Again on:</span>
+                        <button id="run-chrome-btn" class="button">Chrome</button>
+                        <button id="run-firefox-btn" class="button">Firefox</button>
+                        <button id="run-webkit-btn" class="button">WebKit</button>
+                    </div>
+                `;
+                // Add event listeners for the new buttons
+                addRunButtonListeners(state);
+                document.getElementById('heal-test-btn').addEventListener('click', () => {
+                    vscode.postMessage({ command: 'healTest' });
+                });
+                document.getElementById('close-result-btn').addEventListener('click', () => {
+                    vscode.postMessage({ command: 'resetToListener' });
+                });
+            }
+           
+            else if (state.isRunningTest) {
+                app.innerHTML = `
+                    <h2>🏃‍♂️ Running Test...</h2>
+                    <p>Check the "Guide2Cypress Logs" in the Output panel for live updates.</p>
+                    <div class="loader"></div>
+                    <button id="cancel-test-btn" class="button" style="background-color: var(--vscode-button-secondaryBackground); margin-top: 15px;">
+                        ⏹️ Cancel Run
+                    </button>
+                `;
+                // Add an event listener to the new button
+                document.getElementById('cancel-test-btn').addEventListener('click', () => {
+                    vscode.postMessage({ command: 'cancelTestRun' });
+                });
+            }
+            else if (state.isReadyForAction) {
+                const relativePath = state.lastGeneratedTestPath || 'your-test.cy.js';
+                const hasViolations = state.lastAccessibilityReport && state.lastAccessibilityReport.length > 0;
+                app.innerHTML = `
+                    <h2>✅ Test Ready</h2>
+                    <p>Generated file:<br><code>${relativePath}</code></p>
+                    <div style="margin: 10px 0;">
+                        <button id="run-chrome-btn" class="button">🚀 Run on Chrome</button>
+                        <button id="run-firefox-btn" class="button">🦊 Run on Firefox</button>
+                        <button id="run-webkit-btn" class="button">🌐 Run on WebKit (Safari)</button>
+                    </div>
+                    <button id="a11y-report-btn" class="button" ${!hasViolations ? 'disabled' : ''} title="${hasViolations ? 'Generate human-readable accessibility report' : 'No accessibility violations were found'}">
+                        📄 Generate A11y Report ${hasViolations ? `(${state.lastAccessibilityReport.length} ${state.lastAccessibilityReport.length > 1 ? 'pages' : 'page'} with issues)` : ''}
+                    </button>
+                `;
+                document.getElementById('run-chrome-btn').addEventListener('click', () => {
+                    vscode.postMessage({ command: 'runTest', filePath: state.lastGeneratedTestPath, browser: 'chromium' });
+                });
+                document.getElementById('run-firefox-btn').addEventListener('click', () => {
+                    vscode.postMessage({ command: 'runTest', filePath: state.lastGeneratedTestPath, browser: 'firefox' });
+                });
+                document.getElementById('run-webkit-btn').addEventListener('click', () => {
+                    vscode.postMessage({ command: 'runTest', filePath: state.lastGeneratedTestPath, browser: 'webkit' });
+                });
+                const a11yBtn = document.getElementById('a11y-report-btn');
+                if (a11yBtn && !a11yBtn.disabled) {
+                    a11yBtn.addEventListener('click', () => {
+                        vscode.postMessage({ command: 'generateA11yReport' });
+                    });
+                }
+            } 
+            else if (state.isProcessing) {
+                app.innerHTML = `
+                    <h2>⚙️ Processing...</h2>
+                    <p>Generating files and saving assets. Please wait.</p>
+                    <div class="loader"></div> 
+                `;
+            }
+            else if (state.isListening) {
+                app.innerHTML = `
+                    <h2>🟢 Listening for G2C...</h2>
+                    <p>The gateway is open. Go to your Chrome extension and send the test data when you are ready.</p>
+                    <button id="stop-listener-btn" class="button">⏹️ Stop Listener</button>
+                `;
+                document.getElementById('stop-listener-btn').addEventListener('click', () => {
+                    vscode.postMessage({ command: 'stopListener' });
+                });
+            } 
+            else if (state.isCypressProject) {
+                app.innerHTML = `
+                    <h2>Guide2Cypress Ready</h2>
+                    <button id="start-listener-btn" class="button">▶️ Start Listening for Guide2Cypress</button>
+                `;
+                document.getElementById('start-listener-btn').addEventListener('click', () => {
+                    vscode.postMessage({ command: 'startListener' });
+                });
+            } 
+            else {
+                app.innerHTML = `
+                    <h2>Cypress Project Not Found</h2>
+                    <p>Please open a folder containing a 'cypress/e2e' directory to begin.</p>
+                `;
+            }
+        }
+        function addRunButtonListeners(state) {
+            document.getElementById('run-chrome-btn').addEventListener('click', () => {
+                vscode.postMessage({ command: 'runTest', filePath: state.lastGeneratedTestPath, browser: 'chromium' });
+            });
+            document.getElementById('run-firefox-btn').addEventListener('click', () => {
+                vscode.postMessage({ command: 'runTest', filePath: state.lastGeneratedTestPath, browser: 'firefox' });
+            });
+            document.getElementById('run-webkit-btn').addEventListener('click', () => {
+                vscode.postMessage({ command: 'runTest', filePath: state.lastGeneratedTestPath, browser: 'webkit' });
+            });
+        }
+
+
+        vscode.postMessage({ command: 'getViewState' });
+    </script>
+</body>
+</html>

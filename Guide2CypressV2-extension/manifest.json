@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Guide2Cypress",
+  "version": "2.0.0",
+  "description": "Record user interactions and generate Cypress test code.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "sidePanel",
+    "scripting",
+    "tabs",
+    "downloads"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "axe.min.js",
+        "html2canvas.min.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "smallLogo.png",
+    "32": "smallLogo.png",
+    "48": "smallLogo.png",
+    "128": "logo.png"
+  },
+  "action": {
+    "default_title": "Open Guide2Cypress Recorder"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "host_permissions": ["<all_urls>"],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "fonts/WorkSans-Regular.ttf",
+        "fonts/WorkSans-Bold.ttf",
+        "fonts/WorkSans-ExtraBold.ttf",
+        "icons/settings.svg",
+        "icons/delete.svg",
+        "icons/time.svg",
+        "assertIllustration.svg",
+        "visualIllustration.svg"
+       ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}
